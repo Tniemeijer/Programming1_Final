@@ -1,0 +1,4 @@
+L See the location of the weatherstations with geoplot
+H add [March-July total] to the dataframe
+H Manipulate the birds dataframe 
+L look how the data per year? is distributed
