@@ -1,4 +1,4 @@
 precipitation: ["DATA/mndgeg_240_rh24.txt","DATA/mndgeg_260_rh24.txt","DATA/mndgeg_235_rh24.txt","DATA/mndgeg_270_rh24.txt","DATA/mndgeg_280_rh24.txt","DATA/mndgeg_290_rh24.txt","DATA/mndgeg_310_rh24.txt","DATA/mndgeg_344_rh24.txt","DATA/mndgeg_370_rh24.txt","DATA/mndgeg_380_rh24.txt"]
 breedingbirds: DATA/trends_broedvogels_1990-2020_sovon.xlsx
 stn_coord: DATA/list_dx.txt
-
+provinces_geodata: DATA/provinces.geojson

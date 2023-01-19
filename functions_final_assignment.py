@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm, gamma, iqr
+import re
 
 
 def yaml_config():
@@ -44,8 +45,10 @@ def make_stn_dict(stn_description_file):
         stn_coordinate_dict = {}
         for line in stn_file:
             if 'coordinates' in line:
-                coordinates = line[16:43]
+                coordinates = line[16:32]
                 coordinates = coordinates.replace(" ","")
+                coordinates = re.sub(string=coordinates,pattern="N|E",repl="")
+                coordinates = [float(x) for x in coordinates.split(',')]
                 stn_number = stn_file.readline()[14:17]
                 stn_coordinate_dict.update({stn_number:coordinates})
     return stn_coordinate_dict
@@ -60,14 +63,12 @@ def hist_robust_dist(dataframe, distribution = 'norm'):
         'gamma' = gamma distribution (scipy.stats.norm)
 
     >>> hist_robust_norm({'A':10,'B':20,'C':30}, distribution = 'gamma' or 'norm')
-        if gamma is chosen user must supply 
+        if gamma is chosen user must supply. 
 
     ---------------------
     Input: Dataframe
 
     Ouput: histgram with plotted normal distribution and robust mu and sigma.
-
-
 
     """
     mu = np.mean(dataframe)
@@ -114,3 +115,76 @@ def validate_precipitation(x,lower,upper):
         return "wet"
     else:
         return "normal"
+
+def read_geojson(path):
+    """
+    Opens geojson and returns dataframe with the properties.
+
+    >>> read_geojson("~/location/to/file.json")
+
+    -------------------
+    Input: path (string)
+    Output: pd.Dataframe
+    """
+    geo_df = pd.read_json(path)
+    geo_df = pd.json_normalize(geo_df["features"])
+    return geo_df
+
+def get_coordinates_df(nested_list_coord):
+    """
+    From a nested geojson coordinates list, generates a dataframe with
+    x and y coordinates. So use this per row in the coordinates column.
+
+    >>> get_coordinates([[[52.12,14.56],[52.45,14.66],[52.32,14.60]]])
+
+    -------------------
+    Input: nested geometry.coordinates data
+
+    Output: Dataframe with x and y columns.
+    """
+    xd = []
+    yd = []
+    for l in nested_list_coord:
+        for i in l:
+            xd.append(i[0])
+            yd.append(i[1])
+    return pd.DataFrame({'x':xd,'y':yd})
+
+def get_centerpoint(dataframe_coordinates):
+    """
+    Source: https://stackoverflow.com/questions/4355894/how-to-get-center-of-set-of-points-using-python
+    Function calculates the centroid of the inserted.
+
+    """
+    data = get_coordinates_df(dataframe_coordinates)
+
+    x = data.x.to_numpy() 
+    y = data.y.to_numpy()
+
+    #print(f'{x,y}')
+
+    N = range(len(data)-1)
+    M = np.array([(x[i]-x[i+1])*(y[i]+y[i+1])/2 for i in N]) #Area of each trapezoid
+    My = np.array([(x[i]+x[i+1])/2 for i in N])*M #Moment of area (area*distance to centroid) with respect to the Y axis of each trapezoid
+    Mx = np.array([(y[i]+y[i+1])/4 for i in N])*M #Moment of area (area*distance to centroid) with respect to the X axis of each trapezoid
+    X = sum(My)/sum(M)
+    Y = sum(Mx)/sum(M)
+    centroid = [X,Y]
+    points_ave = data.mean(axis=0)
+
+    plt.plot(data.x, data.y, 'r',marker='.',markeredgecolor='black', markersize=3)
+    plt.plot(*centroid, 'blue', marker='o',markeredgecolor='black', markersize=7)
+    plt.plot(*points_ave, 'green', marker='o',markeredgecolor='black', markersize=7)
+    plt.axis('equal')
+    plt.xlim((4, 6))
+    plt.ylim((51,53))
+    plt.legend(['line','Centroid','Average of points'])
+    return [Y,X]
+
+def calc_point_dist(vector1,vector2):
+    """
+    Function calculates the difference between points using Pythagorean theorem.
+    """
+    np1,np2 = np.array(vector1), np.array(vector2)
+    dif  = np1 - np2
+    return np.sqrt((dif[0]**2)+(dif[1]**2))
