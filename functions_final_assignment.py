@@ -11,6 +11,19 @@ import re
 
 plt.style.use("seaborn")
 
+def get_position(number):
+    """
+    simple method to only keep 0-9 for recursive looping over a list with length
+    10
+    >>> get_position(86)
+
+    --------------------
+    input: number
+    output: digits 0-9
+    """
+
+    return number-((number//10)*10)
+
 def yaml_config():
     """
     Opens config.yaml in the same directory as the main script.
