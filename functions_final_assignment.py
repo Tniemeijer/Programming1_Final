@@ -285,3 +285,30 @@ def calc_point_dist(vector1,vector2):
     np1,np2 = np.array(vector1), np.array(vector2)
     dif  = np1 - np2
     return np.sqrt((dif[0]**2)+(dif[1]**2))
+
+def make_prec_corr(dataframe):
+    """
+    Function creates ranges of precipitation in steps of 1000, starting at 1000
+    untill 5000 (4 in total) and calculates the means of the percentage deltas 
+    for all birds in the ranges. Returns dataframe with means, and a dataframe
+    with the standard deviations
+
+    >>> make_prec_corr(pd.Dataframe({"Precipitation:data,bird1:data,bird2:data,etc.}))
+
+    -----------------
+    input : pandas.Dataframe()
+
+    output: pandas.Dataframe(means), pandas.Dataframe(stdevs)
+
+    """
+    ranges = [int(i) for i in np.linspace(1000,5000,5)]
+    means = pd.DataFrame()
+    std = pd.DataFrame()
+    for i in range(4):
+        precipitation = dataframe.copy()
+        precipitation = precipitation[precipitation["Precipitation"].between(ranges[i],ranges[i+1])]
+        precipitation = precipitation.rename(columns={"Precipitation":f"{ranges[i]}-{ranges[i+1]}"})
+        precipitation = [precipitation.mean(),precipitation.std()]
+        means[f"{ranges[i]}-{ranges[i+1]}"] = precipitation[0]
+        std[f"{ranges[i]}-{ranges[i+1]}"] = precipitation[1]
+    return means.iloc[1:], std.iloc[1:]
